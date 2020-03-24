@@ -146,6 +146,7 @@ stop_count = 0
 # Main loop
 for meta_iteration in range(config.epochs):
     # save original weights to make the update
+    # NOTE theta = weights_original
     weights_original = deepcopy(meta_net.state_dict())
     train_loss_before = []
     train_loss_meta = []
