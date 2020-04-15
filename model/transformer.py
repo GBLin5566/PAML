@@ -348,12 +348,14 @@ class Transformer(nn.Module):
             self.generator.proj.weight = self.embedding.weight
 
         self.criterion = nn.NLLLoss(ignore_index=config.PAD_idx)
+
         if (config.label_smoothing):
             self.criterion = LabelSmoothing(
                 size=self.vocab_size,
                 padding_idx=config.PAD_idx,
                 smoothing=0.1)
             self.criterion_ppl = nn.NLLLoss(ignore_index=config.PAD_idx)
+
         if is_eval:
             self.encoder = self.encoder.eval()
             self.decoder = self.decoder.eval()
@@ -361,13 +363,16 @@ class Transformer(nn.Module):
             self.embedding = self.embedding.eval()
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=config.lr)
+
         if(config.noam):
             self.optimizer = NoamOpt(
                 config.hidden_dim, 1, 4000, torch.optim.Adam(
                     self.parameters(), lr=0, betas=(
                         0.9, 0.98), eps=1e-9))
+
         if config.use_sgd:
             self.optimizer = torch.optim.SGD(self.parameters(), lr=config.lr)
+
         if model_file_path is not None:
             print("loading weights")
             state = torch.load(
@@ -388,6 +393,7 @@ class Transformer(nn.Module):
             self.generator = self.generator.cuda()
             self.criterion = self.criterion.cuda()
             self.embedding = self.embedding.cuda()
+
         self.model_dir = config.save_path
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
@@ -404,8 +410,9 @@ class Transformer(nn.Module):
             'current_loss': running_avg_ppl
         }
         model_save_path = os.path.join(
-            self.model_dir, 'model_{}_{:.4f}_{:.4f}_{:.4f}_{:.4f}_{:.4f}'.format(
-                iter, running_avg_ppl, f1_g, f1_b, ent_g, ent_b))
+            self.model_dir,
+            'model_{}_{:.4f}_{:.4f}_{:.4f}_{:.4f}_{:.4f}'.format(
+                    iter, running_avg_ppl, f1_g, f1_b, ent_g, ent_b))
         self.best_path = model_save_path
         torch.save(state, model_save_path)
 
