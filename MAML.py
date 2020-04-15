@@ -1,22 +1,14 @@
 import numpy as np
 from tensorboardX import SummaryWriter
 import math
-import seaborn as sns
-import matplotlib.pyplot as plt
 from copy import deepcopy
 from random import shuffle
-import time
-import os
-from tqdm import tqdm
-import torch.nn.functional as F
 import torch.nn as nn
 import torch
 from utils import config
-from model.common_layer import NoamOpt, evaluate
+from model.common_layer import NoamOpt
 from model.transformer import Transformer
 from utils.data_reader import Personas
-import matplotlib
-matplotlib.use('Agg')
 
 
 def make_infinite(dataloader):
@@ -49,7 +41,7 @@ def do_learning_early_stop(model, train_iter, val_iter, iterations, strict=1):
     best = deepcopy(model.state_dict())
     cnt = 0
     idx = 0
-    for _, _ in enumerate(range(iterations)):
+    for _ in range(iterations):
         train_l, train_p = [], []
         for d in train_iter:
             t_loss, t_ppl, _ = model.train_one_batch(d)
@@ -86,7 +78,6 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations, test=False):
         if test:
             _, test_ppl = do_evaluation(model, val_iter)
             val_p_list.append(test_ppl)
-    #weight = deepcopy(model.state.dict())
 
     if test:
         return val_p_list
@@ -133,7 +124,6 @@ else:
 
 meta_batch_size = config.meta_batch_size
 tasks = p.get_personas('train')
-#tasks_loader = {t: p.get_data_loader(persona=t,batch_size=config.batch_size, split='train') for t in tasks}
 tasks_iter = make_infinite_list(tasks)
 
 
@@ -156,10 +146,12 @@ for meta_iteration in range(config.epochs):
         # Get task
         if config.fix_dialnum_train:
             train_iter, val_iter = p.get_balanced_loader(
-                persona=tasks_iter.__next__(), batch_size=config.batch_size, split='train')
+                persona=tasks_iter.__next__(),
+                batch_size=config.batch_size, split='train')
         else:
             train_iter, val_iter = p.get_data_loader(
-                persona=tasks_iter.__next__(), batch_size=config.batch_size, split='train')
+                persona=tasks_iter.__next__(),
+                batch_size=config.batch_size, split='train')
         # before first update
         v_loss, v_ppl = do_evaluation(meta_net, val_iter)
         train_loss_before.append(math.exp(v_loss))
@@ -198,22 +190,23 @@ for meta_iteration in range(config.epochs):
         val_loss_before = []
         val_loss_meta = []
         weights_original = deepcopy(meta_net.state_dict())
-        for idx, per in enumerate(p.get_personas('valid')):
-            #num_of_dialog = p.get_num_of_dialog(persona=per, split='valid')
-            # for dial_i in range(num_of_dialog):
+        for per in p.get_personas('valid'):
             if config.fix_dialnum_train:
                 train_iter, val_iter = p.get_balanced_loader(
-                    persona=per, batch_size=config.batch_size, split='valid', fold=0)
+                    persona=per,
+                    batch_size=config.batch_size, split='valid', fold=0)
 
             else:
                 train_iter, val_iter = p.get_data_loader(
-                    persona=per, batch_size=config.batch_size, split='valid', fold=0)
+                    persona=per,
+                    batch_size=config.batch_size, split='valid', fold=0)
             # zero shot result
             loss, ppl = do_evaluation(meta_net, val_iter)
             val_loss_before.append(math.exp(loss))
             # mate tuning
             val_loss, val_ppl = do_learning_fix_step(
-                meta_net, train_iter, val_iter, iterations=config.meta_iteration)
+                meta_net, train_iter, val_iter,
+                iterations=config.meta_iteration)
             val_loss_meta.append(math.exp(val_loss.item()))
             # updated result
 

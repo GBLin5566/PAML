@@ -6,15 +6,10 @@ import torch
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import re
-import math
 import random
 from random import randint
-from collections import Counter
-from random import shuffle
 import pprint
 pp = pprint.PrettyPrinter(indent=1)
-# from torch.autograd import Variable
 
 
 def DistJaccard(str1, str2):
@@ -25,10 +20,9 @@ def DistJaccard(str1, str2):
 
 def dist_matrix(array_str):
     matrix = []
-    for i, s_r in enumerate(array_str):
+    for s_r in array_str:
         row = []
-        for j, s_c in enumerate(array_str):
-            # row.append(get_cosine(text_to_vector(s_r),text_to_vector(s_c)))
+        for s_c in array_str:
             row.append(DistJaccard(s_r, s_c))
         matrix.append(row)
     mat_ = np.array(matrix)
@@ -45,7 +39,7 @@ def plot_mat(mat):
 
 def create_str_array(data):
     arr = []
-    for k, v in data.items():
+    for _, v in data.items():
         arr.append(" ".join(v[0][0]))
     return arr
 
@@ -168,7 +162,6 @@ class Dataset(data.Dataset):
         return seq, oovs
 
     def process_target(self, target_txt, oovs):
-        # seq = [self.word2index[word] if word in self.word2index and self.word2index[word] < self.output_vocab_size else UNK_idx for word in input_txt.strip().split()] + [EOS_idx]
         seq = []
         for word in target_txt.strip().split():
             if word in self.vocab.word2index:
@@ -364,30 +357,33 @@ def preprocess(data, vocab):
 
 
 def prepare_data_seq():
-    file_train = 'data/ConvAI2/train_self_original.txt'
-    file_dev = 'data/ConvAI2/valid_self_original.txt'
-    file_test = 'data/ConvAI2/test_self_original.txt'
+    file_paths = {
+        'train': 'data/ConvAI2/train_self_original.txt',
+        'valid': 'data/ConvAI2/valid_self_original.txt',
+        'test': 'data/ConvAI2/test_self_original.txt',
+    }
     cand = {}
-    train = read_langs(file_train, cand_list=cand, max_line=None)
-    valid = read_langs(file_dev, cand_list=cand, max_line=None)
-    test = read_langs(file_test, cand_list=cand, max_line=None)
     vocab = Lang()
-    # {persona:{dial1:[[context,canditate,answer,persona],[context,canditate,answer,persona]]}, dial2:[[context,canditate,answer,persona],[context,canditate,answer,persona]]}}
-    train = preprocess(train, vocab)
-    valid = preprocess(valid, vocab)
-    test = preprocess(test, vocab)
-    train = filter_data(cluster_persona(train, 'train'), cut=1)
-    valid = filter_data(cluster_persona(valid, 'valid'), cut=1)
-    test = filter_data(cluster_persona(test, 'test'), cut=1)
+    data = [
+        filter_data(
+            cluster_persona(
+                preprocess(
+                    read_langs(path, cand_list=cand, max_line=None),
+                    vocab),
+                desp),
+            cut=1)
+        for desp, path in file_paths.items()
+    ]
     print("Vocab_size %s " % vocab.n_words)
+    data += [vocab]
 
     if not os.path.exists(config.save_path):
         os.makedirs(config.save_path)
     with open(config.save_path + 'dataset.p', "wb") as f:
-        pickle.dump([train, valid, test, vocab], f)
+        pickle.dump(data, f)
         print("Saved PICKLE")
 
-    return train, valid, test, vocab
+    return data
 
 
 def get_persona(data):
@@ -409,7 +405,8 @@ class Personas:
                          'test': self.meta_test}
             print("DATASET LOADED FROM PICKLE")
         else:
-            self.meta_train, self.meta_valid, self.meta_test, self.vocab = prepare_data_seq()
+            self.meta_train, self.meta_valid, self.meta_test, self.vocab = \
+                prepare_data_seq()
             self.type = {'train': self.meta_train,
                          'valid': self.meta_valid,
                          'test': self.meta_test}

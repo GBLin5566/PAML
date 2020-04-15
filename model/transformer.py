@@ -1,22 +1,33 @@
 # TAKEN FROM https://github.com/kolloldas/torchnlp
-
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
 import math
-from model.common_layer import EncoderLayer, DecoderLayer, MultiHeadAttention, Conv, PositionwiseFeedForward, LayerNorm, _gen_bias_mask, _gen_timing_signal, share_embedding, LabelSmoothing, NoamOpt, _get_attn_subsequent_mask, get_input_from_batch, get_output_from_batch
+from model.common_layer import (
+    EncoderLayer,
+    DecoderLayer,
+    LayerNorm,
+    _gen_bias_mask,
+    _gen_timing_signal,
+    share_embedding,
+    LabelSmoothing,
+    NoamOpt,
+    _get_attn_subsequent_mask,
+    get_input_from_batch,
+    get_output_from_batch,
+)
 from utils import config
 import random
-from numpy import random
+from numpy import random as np_random
 import os
 import pprint
-from tqdm import tqdm
 pp = pprint.PrettyPrinter(indent=1)
 
+
 random.seed(123)
+np_random.seed(123)
 torch.manual_seed(123)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(123)
