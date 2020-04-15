@@ -27,13 +27,13 @@ parser.add_argument("--act", action="store_true")
 parser.add_argument("--act_loss_weight", type=float, default=0.001)
 
 
-## transformer 
+# transformer
 parser.add_argument("--hop", type=int, default=6)
 parser.add_argument("--heads", type=int, default=4)
 parser.add_argument("--depth", type=int, default=40)
 parser.add_argument("--filter", type=int, default=50)
 
-#meta
+# meta
 parser.add_argument("--fix_dialnum_train", action="store_true")
 parser.add_argument("--meta_lr", type=float, default=0.1)
 parser.add_argument("--mate_interation", type=int, default=1)
@@ -50,28 +50,28 @@ persona = arg.persona
 
 
 # Hyperparameters
-hidden_dim= arg.hidden_dim
-emb_dim= arg.emb_dim
-batch_size= arg.batch_size
-lr=arg.lr
+hidden_dim = arg.hidden_dim
+emb_dim = arg.emb_dim
+batch_size = arg.batch_size
+lr = arg.lr
 
-max_enc_steps=arg.max_enc_steps
-max_dec_step= max_dec_steps=arg.max_dec_steps
+max_enc_steps = arg.max_enc_steps
+max_dec_step = max_dec_steps = arg.max_dec_steps
 
-min_dec_steps=arg.min_dec_steps 
-beam_size=arg.beam_size
+min_dec_steps = arg.min_dec_steps
+beam_size = arg.beam_size
 
-adagrad_init_acc=0.1
-rand_unif_init_mag=0.02
-trunc_norm_init_std=1e-4
-max_grad_norm=arg.max_grad_norm
+adagrad_init_acc = 0.1
+rand_unif_init_mag = 0.02
+trunc_norm_init_std = 1e-4
+max_grad_norm = arg.max_grad_norm
 
 USE_CUDA = arg.cuda
 pointer_gen = arg.pointer_gen
 is_coverage = arg.is_coverage
 use_oov_emb = arg.use_oov_emb
 cov_loss_wt = 1.0
-lr_coverage=0.15
+lr_coverage = 0.15
 eps = 1e-12
 epochs = 10000
 UNK_idx = 0
@@ -91,7 +91,7 @@ if(not test):
     save_path_dataset = save_path
 
 
-### transformer 
+# transformer
 hop = arg.hop
 heads = arg.heads
 depth = arg.depth
@@ -106,7 +106,7 @@ act = arg.act
 act_loss_weight = arg.act_loss_weight
 
 
-## Meta-learn
+# Meta-learn
 meta_lr = arg.meta_lr
 meta_iteration = arg.mate_interation
 use_sgd = arg.use_sgd
