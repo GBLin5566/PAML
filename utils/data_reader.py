@@ -63,7 +63,7 @@ class Lang:
             config.PAD_idx: "PAD",
             config.EOS_idx: "EOS",
             config.SOS_idx: "SOS"}
-        self.n_words = 4  # Count default tokens
+        self.n_words = len(self.index2word)
 
     def index_words(self, sentence):
         for word in sentence.split(' '):
