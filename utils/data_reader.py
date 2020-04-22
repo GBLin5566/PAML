@@ -78,6 +78,19 @@ class Lang:
         else:
             self.word2count[word] += 1
 
+    def transform(self, inputs, is_list_of_str):
+        if is_list_of_str:
+            sequence = [
+                self.word2index[word]
+                if word in self.word2index else config.UNK_idx
+                for word in inputs.split(' ')] + [config.EOS_idx]
+        else:
+            sequence = [
+                self.word2index[word]
+                if word in self.word2index else config.UNK_idx
+                for word in ' '.join(inputs).split(' ')]
+        return torch.LongTensor(sequence)
+
 
 class Dataset(data.Dataset):
     """Custom data.Dataset compatible with data.DataLoader."""
@@ -118,14 +131,15 @@ class Dataset(data.Dataset):
         item["cand_txt"] = self.cands[index]
         item["cand_index"] = []
         for c in self.cands[index]:
-            item["cand_index"].append(self.preprocess(c, anw=True))
+            item["cand_index"].append(self.preprocess(c, is_list_of_str=True))
         item["persona_txt"] = self.persona[index]
 
         item["input_batch"] = self.preprocess(self.src[index])
-        item["target_batch"] = self.preprocess(self.trg[index], anw=True)
+        item["target_batch"] = self.preprocess(
+            self.trg[index], is_list_of_str=True)
         if config.pointer_gen:
-            item["input_ext_vocab_batch"], item["article_oovs"] = self.process_input(
-                item["input_txt"])
+            item["input_ext_vocab_batch"], item["article_oovs"] = \
+                self.process_input(item["input_txt"])
             item["target_ext_vocab_batch"] = self.process_target(
                 item["target_txt"], item["article_oovs"])
         return item
@@ -133,17 +147,9 @@ class Dataset(data.Dataset):
     def __len__(self):
         return self.num_total_seqs
 
-    def preprocess(self, arr, anw=False):
+    def preprocess(self, inputs, is_list_of_str=False):
         """Converts words to ids."""
-        if(anw):
-            sequence = [self.vocab.word2index[word] if word in self.vocab.word2index else config.UNK_idx for word in arr.split(
-                ' ')] + [config.EOS_idx]
-        else:
-            sequence = [self.vocab.word2index[word]
-                        if word in self.vocab.word2index else config.UNK_idx for word in ' '.join(arr).split(' ')]
-        return torch.LongTensor(sequence)
-
-    # for know I ignore unk
+        return self.vocab.transform(inputs, is_list_of_str)
 
     def process_input(self, input_txt):
         seq = []
@@ -257,9 +263,9 @@ def read_langs(file_name, cand_list, max_line=None):
                 index_dial = 0
             lock = 1
             if '\t' in line:
+                # utterance line
                 u, r, _, cand = line.split('\t')
                 cand = cand.split('|')
-                # shuffle(cand)
                 for c in cand:
                     if c in cand_list:
                         pass
@@ -268,6 +274,7 @@ def read_langs(file_name, cand_list, max_line=None):
                 dial.append({"nid": index_dial, "u": u, "r": r, 'cand': cand})
                 index_dial += 1
             else:
+                # persona line
                 r = line.split(":")[1][1:-1]
                 persona.append(str(r))
     return data
@@ -317,8 +324,8 @@ def preprocess(data, vocab):
     cnt_ptr = 0
     cnt_voc = 0
     for k, v in data.items():
+        # string of list of string -> list of string
         p = eval(k)
-
         for e in p:
             vocab.index_words(e)
         new_v = {i: [] for i in range(len(v))}
