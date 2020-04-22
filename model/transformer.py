@@ -418,8 +418,8 @@ class Transformer(nn.Module):
 
     def train_one_batch(self, batch, train=True):
         # pad and other stuff
-        enc_batch, _, _, enc_batch_extend_vocab, extra_zeros, _, _ = get_input_from_batch(
-            batch)
+        enc_batch, _, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
+            get_input_from_batch(batch)
         dec_batch, _, _, _, _ = get_output_from_batch(batch)
 
         if(config.noam):
@@ -450,7 +450,8 @@ class Transformer(nn.Module):
 
         # loss: NNL if ptr else Cross entropy
         loss = self.criterion(
-            logit.contiguous().view(-1, logit.size(-1)), dec_batch.contiguous().view(-1))
+            logit.contiguous().view(-1, logit.size(-1)),
+            dec_batch.contiguous().view(-1))
 
         if(config.act):
             loss += self.compute_act_loss(self.encoder)
@@ -461,7 +462,8 @@ class Transformer(nn.Module):
             self.optimizer.step()
         if(config.label_smoothing):
             loss = self.criterion_ppl(
-                logit.contiguous().view(-1, logit.size(-1)), dec_batch.contiguous().view(-1))
+                logit.contiguous().view(-1, logit.size(-1)),
+                dec_batch.contiguous().view(-1))
 
         return loss.item(), math.exp(min(loss.item(), 100)), loss
 
