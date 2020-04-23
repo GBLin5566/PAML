@@ -38,7 +38,7 @@ parser.add_argument("--filter", type=int, default=50)
 # meta
 parser.add_argument("--fix_dialnum_train", action="store_true")
 parser.add_argument("--meta_lr", type=float, default=0.1)
-parser.add_argument("--mate_interation", type=int, default=1)
+parser.add_argument("--meta_iteration", type=int, default=1)
 parser.add_argument("--use_sgd", action="store_true")
 parser.add_argument('--meta_batch_size', type=int, default=1)
 parser.add_argument("--meta_optimizer", type=str, default="sgd")
@@ -111,7 +111,7 @@ act_loss_weight = arg.act_loss_weight
 
 # Meta-learn
 meta_lr = arg.meta_lr
-meta_iteration = arg.mate_interation
+meta_iteration = arg.meta_iteration
 use_sgd = arg.use_sgd
 meta_batch_size = arg.meta_batch_size
 meta_optimizer = arg.meta_optimizer
