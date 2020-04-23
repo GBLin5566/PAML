@@ -1,13 +1,14 @@
 import os
 import pickle
-from utils import config
+import random
+from random import randint
 import torch.utils.data as data
 import torch
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import random
-from random import randint
+from transformers import BertTokenizer
+from utils import config
 import pprint
 pp = pprint.PrettyPrinter(indent=1)
 
@@ -92,6 +93,16 @@ class Lang:
         return torch.LongTensor(sequence)
 
 
+class BertLang:
+    def __init__(self):
+        self.tokenizer = config._tokenizer
+
+    def transform(self, inputs, is_list_of_str):
+        if not is_list_of_str:
+            inputs = ' '.join(inputs)
+        return torch.LongTensor(self.tokenizer.encode(inputs))
+
+
 class Dataset(data.Dataset):
     """Custom data.Dataset compatible with data.DataLoader."""
 
@@ -154,17 +165,7 @@ class Dataset(data.Dataset):
     def process_input(self, input_txt):
         seq = []
         oovs = []
-        for word in ' '.join(input_txt).strip().split():
-            if word in self.vocab.word2index:
-                seq.append(self.vocab.word2index[word])
-            else:
-                seq.append(config.UNK_idx)
-            # else:
-            #     if word not in oovs:
-            #         oovs.append(word)
-            #     seq.append(self.vocab.n_words + oovs.index(word))
-
-        seq = torch.LongTensor(seq)
+        seq = torch.LongTensor(self.vocab.transform(input_txt, is_list_of_str=True))
         return seq, oovs
 
     def process_target(self, target_txt, oovs):
@@ -184,7 +185,8 @@ class Dataset(data.Dataset):
 def collate_fn(data):
     def merge(sequences):
         lengths = [len(seq) for seq in sequences]
-        padded_seqs = torch.ones(len(sequences), max(lengths)).long()
+        padded_seqs = torch.zeros(len(sequences), max(lengths)).long() + \
+            config.PAD_idx
         for i, seq in enumerate(sequences):
             end = lengths[i]
             padded_seqs[i, :end] = seq[:end]
@@ -319,15 +321,13 @@ def cluster_persona(data, split):
     return newdata
 
 
-def preprocess(data, vocab):
+def preprocess(data):
     newdata = {}
     cnt_ptr = 0
     cnt_voc = 0
     for k, v in data.items():
         # string of list of string -> list of string
         p = eval(k)
-        for e in p:
-            vocab.index_words(e)
         new_v = {i: [] for i in range(len(v))}
         for d_index, dial in enumerate(v):
             if(config.persona):
@@ -336,10 +336,7 @@ def preprocess(data, vocab):
                 context = []
             for turn in dial:
                 context.append(turn["u"])
-                vocab.index_words(turn["u"])
-                vocab.index_words(turn["r"])
                 for i, c in enumerate(turn['cand']):
-                    vocab.index_words(c)
                     if(turn["r"] == c):
                         answer = i
 
@@ -370,18 +367,17 @@ def prepare_data_seq():
         'test': 'data/ConvAI2/test_self_original.txt',
     }
     cand = {}
-    vocab = Lang()
+    vocab = BertLang()
     data = [
         filter_data(
             cluster_persona(
                 preprocess(
                     read_langs(path, cand_list=cand, max_line=None),
-                    vocab),
+                    ),
                 desp),
             cut=1)
         for desp, path in file_paths.items()
     ]
-    print("Vocab_size %s " % vocab.n_words)
     data += [vocab]
 
     if not os.path.exists(config.save_path):

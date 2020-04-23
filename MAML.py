@@ -103,18 +103,7 @@ def do_evaluation(model, test_iter):
 p = Personas()
 writer = SummaryWriter(log_dir=config.save_path)
 # Build model, optimizer, and set states
-meta_net = Bert2Bert(p.vocab)
-if config.meta_optimizer == 'sgd':
-    meta_optimizer = torch.optim.SGD(meta_net.parameters(), lr=config.meta_lr)
-elif config.meta_optimizer == 'adam':
-    meta_optimizer = torch.optim.Adam(meta_net.parameters(), lr=config.meta_lr)
-elif config.meta_optimizer == 'noam':
-    meta_optimizer = NoamOpt(
-        config.hidden_dim, 1, 4000, torch.optim.Adam(
-            meta_net.parameters(), lr=0, betas=(
-                0.9, 0.98), eps=1e-9))
-else:
-    raise ValueError
+meta_net = Bert2Bert()
 
 meta_batch_size = config.meta_batch_size
 tasks = p.get_personas('train')

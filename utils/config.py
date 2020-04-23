@@ -1,3 +1,5 @@
+from transformers import BertTokenizer
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--persona", action="store_true")
@@ -74,10 +76,11 @@ cov_loss_wt = 1.0
 lr_coverage = 0.15
 eps = 1e-12
 epochs = 10000
-UNK_idx = 0
-PAD_idx = 1
-EOS_idx = 2
-SOS_idx = 3
+_tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+UNK_idx = _tokenizer.unk_token_id
+PAD_idx = _tokenizer.pad_token_id
+EOS_idx = _tokenizer.sep_token_id
+SOS_idx = _tokenizer.cls_token_id
 
 
 emb_file = "vectors/glove.6B.{}d.txt".format(str(emb_dim))
