@@ -60,7 +60,7 @@ class Bert2Bert(nn.Module):
         enc_batch, _, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
             get_input_from_batch(batch)
         dec_batch, _, _, _, _ = get_output_from_batch(batch)
-        dec_batch_input, dec_batch_output = dec_batch[:, 1:], dec_batch[:, :-1]
+        dec_batch_input, dec_batch_output = dec_batch[:, :-1], dec_batch[:, 1:]
 
         self.optimizer.zero_grad()
         logit, *_ = self.model(enc_batch, dec_batch_input)
