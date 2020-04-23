@@ -25,16 +25,6 @@ def make_infinite_list(personas):
             yield x
 
 
-def do_learning(model, train_iter, iterations):
-    p, l = [], []
-    for i in range(iterations):
-        # print(train_iter.__next__())
-        loss, ppl, _ = model.train_one_batch(train_iter.__next__())
-        l.append(loss)
-        p.append(ppl)
-    return loss
-
-
 def do_learning_early_stop(model, train_iter, val_iter, iterations, strict=1):
     # b_loss, b_ppl = do_evaluation(model, val_iter)
     b_loss, b_ppl = 100000, 100000
@@ -135,7 +125,7 @@ for meta_iteration in range(config.epochs):
     train_loss_meta = []
     # loss accumulate from a batch of tasks
     batch_loss = 0
-    for _ in range(meta_batch_size):
+    for meta_batch_index in range(meta_batch_size):
         # Get task
         if config.fix_dialnum_train:
             train_iter, val_iter = p.get_balanced_loader(
@@ -151,6 +141,7 @@ for meta_iteration in range(config.epochs):
         # Update fast nets
         val_loss, v_ppl = do_learning_fix_step(
             meta_net, train_iter, val_iter, iterations=config.meta_iteration)
+        print(f"meta_iteration {meta_iteration} meta_batch_index {meta_batch_index}: loss {val_loss} ppl {v_ppl}")
         train_loss_meta.append(math.exp(val_loss.item()))
         batch_loss += val_loss
         # log
@@ -178,7 +169,7 @@ for meta_iteration in range(config.epochs):
     meta_optimizer.step()
 
     # Meta-Evaluation
-    if meta_iteration % 10 == 0:
+    if meta_iteration % 10 == 0 and meta_iteration:
         print('Meta_iteration:', meta_iteration)
         val_loss_before = []
         val_loss_meta = []
@@ -188,7 +179,6 @@ for meta_iteration in range(config.epochs):
                 train_iter, val_iter = p.get_balanced_loader(
                     persona=per,
                     batch_size=config.batch_size, split='valid', fold=0)
-
             else:
                 train_iter, val_iter = p.get_data_loader(
                     persona=per,
@@ -196,7 +186,7 @@ for meta_iteration in range(config.epochs):
             # zero shot result
             loss, ppl = do_evaluation(meta_net, val_iter)
             val_loss_before.append(math.exp(loss))
-            # mate tuning
+            # mata tuning
             val_loss, val_ppl = do_learning_fix_step(
                 meta_net, train_iter, val_iter,
                 iterations=config.meta_iteration)

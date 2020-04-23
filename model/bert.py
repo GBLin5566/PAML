@@ -27,7 +27,7 @@ class Bert2Bert(nn.Module):
         if is_eval:
             self.model = self.model.eval()
 
-        self.criterion = nn.NLLLoss(ignore_index=config.PAD_idx)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=config.PAD_idx)
         self.optimizer = torch.optim.Adam(self.parameters(), lr=config.lr)
 
         if config.use_sgd:
@@ -63,7 +63,6 @@ class Bert2Bert(nn.Module):
         dec_batch_input, dec_batch_output = dec_batch[:, 1:], dec_batch[:, :-1]
 
         self.optimizer.zero_grad()
-
         logit, *_ = self.model(enc_batch, dec_batch_input)
 
         # loss: NNL if ptr else Cross entropy
