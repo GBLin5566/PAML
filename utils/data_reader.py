@@ -100,7 +100,7 @@ class BertLang:
     def transform(self, inputs, is_list_of_str):
         if not is_list_of_str:
             inputs = ' '.join(inputs)
-        return torch.LongTensor(self.tokenizer.encode(inputs))
+        return torch.LongTensor(self.tokenizer.encode(inputs, max_length=500))
 
 
 class Dataset(data.Dataset):
