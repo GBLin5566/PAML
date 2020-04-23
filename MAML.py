@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 from utils import config
 from model.common_layer import NoamOpt
-from model.transformer import Transformer
+from model import Bert2Bert
 from utils.data_reader import Personas
 
 
@@ -103,13 +103,7 @@ def do_evaluation(model, test_iter):
 p = Personas()
 writer = SummaryWriter(log_dir=config.save_path)
 # Build model, optimizer, and set states
-if not (config.load_frompretrain == 'None'):
-    meta_net = Transformer(
-        p.vocab,
-        model_file_path=config.load_frompretrain,
-        is_eval=False)
-else:
-    meta_net = Transformer(p.vocab)
+meta_net = Bert2Bert(p.vocab)
 if config.meta_optimizer == 'sgd':
     meta_optimizer = torch.optim.SGD(meta_net.parameters(), lr=config.meta_lr)
 elif config.meta_optimizer == 'adam':
