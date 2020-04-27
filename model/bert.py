@@ -82,4 +82,4 @@ class Bert2Bert(nn.Module):
                 logit.contiguous().view(-1, logit.size(-1)),
                 dec_batch.contiguous().view(-1))
 
-        return loss.item(), math.exp(min(loss.item(), 100)), loss
+        return loss.item(), math.exp(loss.item()), loss
