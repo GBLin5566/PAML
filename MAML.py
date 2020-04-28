@@ -190,7 +190,7 @@ for meta_iteration in range(config.epochs):
             val_loss, val_ppl = do_learning_fix_step(
                 meta_net, train_iter, val_iter,
                 iterations=config.meta_iteration)
-            print(f"persona {per}: loss {val_loss} ppl {v_ppl}")
+            print(f"persona {per}: loss {val_loss} ppl {val_ppl}")
             val_loss_meta.append(math.exp(val_loss.item()))
             # updated result
 
