@@ -86,7 +86,7 @@ SOS_idx = _tokenizer.cls_token_id
 emb_file = "vectors/glove.6B.{}d.txt".format(str(emb_dim))
 preptrained = arg.pretrain_emb
 
-save_path = arg.save_path
+save_path = arg.save_path + f"_lr_{arg.lr}_meta_lr_{arg.meta_lr}"
 save_path_dataset = arg.save_path_dataset
 
 test = arg.test
