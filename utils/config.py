@@ -1,3 +1,5 @@
+import os
+
 from transformers import BertTokenizer
 
 import argparse
@@ -86,7 +88,9 @@ SOS_idx = _tokenizer.cls_token_id
 emb_file = "vectors/glove.6B.{}d.txt".format(str(emb_dim))
 preptrained = arg.pretrain_emb
 
-save_path = arg.save_path + f"_lr_{arg.lr}_meta_lr_{arg.meta_lr}"
+path_split = arg.save_path.split(os.sep)
+path_split[-1] += f"_lr_{arg.lr}_meta_lr_{arg.meta_lr}"
+save_path = f'{os.sep}'.join(path_split)
 save_path_dataset = arg.save_path_dataset
 
 test = arg.test
