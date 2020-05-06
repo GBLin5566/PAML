@@ -57,7 +57,6 @@ class Bert2Bert(nn.Module):
     def train_one_batch(self, batch, train=True):
         if train:
             self.model.train()
-        import ipdb; ipdb.set_trace()
         enc_batch, enc_mask, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
             get_input_from_batch(batch)
         dec_batch, dec_mask, _, _, _ = get_output_from_batch(batch)
