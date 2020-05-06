@@ -1,13 +1,15 @@
-import numpy as np
-from tensorboardX import SummaryWriter
+import os
 import math
 from copy import deepcopy
 from random import shuffle
+
+import numpy as np
+from tensorboardX import SummaryWriter
 import torch.nn as nn
 import torch
-from utils import config
 from model.common_layer import NoamOpt
 from model import Bert2Bert
+from utils import config
 from utils.data_reader import Personas
 
 
@@ -91,7 +93,12 @@ def do_evaluation(model, test_iter):
 
 
 p = Personas()
-writer = SummaryWriter(log_dir=config.save_path)
+path_split = config.save_path.split(os.sep)
+if not path_split[-1]:
+    path_split.pop(-1)
+path_split[-1] += f"_lr_{config.lr}_meta_lr_{config.meta_lr}"
+save_path = f'{os.sep}'.join(path_split)
+writer = SummaryWriter(log_dir=save_path)
 # Build model, optimizer, and set states
 meta_net = Bert2Bert()
 if config.meta_optimizer == 'sgd':
