@@ -14,6 +14,8 @@ from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.optimization import BertAdam
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE
 
+from utils import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -259,7 +261,10 @@ class bert_model(object):
         # Load a trained model that you have fine-tuned
         output_model_file = os.path.join(
             "data/nli_model/", "pytorch_model.bin")
-        model_state_dict = torch.load(output_model_file)
+        model_state_dict = torch.load(
+            output_model_file,
+            map_location=torch.device('cuda' if config.USE_CUDA else 'cpu'),
+        )
         model = BertForSequenceClassification.from_pretrained(
             'bert-base-uncased', state_dict=model_state_dict, num_labels=self.num_labels)
         model.to(self.device)
