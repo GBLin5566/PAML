@@ -1,4 +1,4 @@
-from transformers import BertTokenizer
+from transformers import BertTokenizer, BartTokenizer
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -49,6 +49,7 @@ arg = parser.parse_args()
 print(arg)
 model = arg.model
 persona = arg.persona
+model_type = 'bart'  # bert2bert, bart
 
 
 # Hyperparameters
@@ -76,7 +77,12 @@ cov_loss_wt = 1.0
 lr_coverage = 0.15
 eps = 1e-12
 epochs = 10000
-_tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+if model_type == 'bert2bert':
+    _tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+elif model_type == 'bart':
+    _tokenizer = BartTokenizer.from_pretrained('bart-large')
+else:
+    raise ValueError(f"Wrong model_type {model_type}")
 UNK_idx = _tokenizer.unk_token_id
 PAD_idx = _tokenizer.pad_token_id
 EOS_idx = _tokenizer.sep_token_id
