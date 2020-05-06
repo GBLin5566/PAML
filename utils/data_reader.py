@@ -7,10 +7,12 @@ import torch
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from transformers import BertTokenizer
 from utils import config
 import pprint
 pp = pprint.PrettyPrinter(indent=1)
+
+
+DATASET_NAME = f'dataset_{config.model_type}.p'
 
 
 def DistJaccard(str1, str2):
@@ -93,7 +95,7 @@ class Lang:
         return torch.LongTensor(sequence)
 
 
-class BertLang:
+class MyLang:
     def __init__(self):
         self.tokenizer = config._tokenizer
 
@@ -367,7 +369,7 @@ def prepare_data_seq():
         'test': 'data/ConvAI2/test_self_original.txt',
     }
     cand = {}
-    vocab = BertLang()
+    vocab = MyLang()
     data = [
         filter_data(
             cluster_persona(
@@ -382,7 +384,7 @@ def prepare_data_seq():
 
     if not os.path.exists(config.save_path):
         os.makedirs(config.save_path)
-    with open(config.save_path + 'dataset.p', "wb") as f:
+    with open(config.save_path + DATASET_NAME, "wb") as f:
         pickle.dump(data, f)
         print("Saved PICKLE")
 
@@ -399,8 +401,8 @@ def get_persona(data):
 class Personas:
     def __init__(self):
         random.seed(999)
-        if(os.path.exists(config.save_path_dataset + 'dataset.p')):
-            with open(config.save_path_dataset + 'dataset.p', "rb") as f:
+        if(os.path.exists(config.save_path_dataset + DATASET_NAME)):
+            with open(config.save_path_dataset + DATASET_NAME, "rb") as f:
                 [self.meta_train, self.meta_valid,
                     self.meta_test, self.vocab] = pickle.load(f)
             self.type = {'train': self.meta_train,
