@@ -89,6 +89,8 @@ emb_file = "vectors/glove.6B.{}d.txt".format(str(emb_dim))
 preptrained = arg.pretrain_emb
 
 path_split = arg.save_path.split(os.sep)
+if not path_split[-1]:
+    path_split.pop(-1)
 path_split[-1] += f"_lr_{arg.lr}_meta_lr_{arg.meta_lr}"
 save_path = f'{os.sep}'.join(path_split)
 save_path_dataset = arg.save_path_dataset
