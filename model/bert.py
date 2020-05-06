@@ -57,13 +57,19 @@ class Bert2Bert(nn.Module):
     def train_one_batch(self, batch, train=True):
         if train:
             self.model.train()
-        enc_batch, _, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
+        import ipdb; ipdb.set_trace()
+        enc_batch, enc_mask, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
             get_input_from_batch(batch)
-        dec_batch, _, _, _, _ = get_output_from_batch(batch)
+        dec_batch, dec_mask, _, _, _ = get_output_from_batch(batch)
         dec_batch_input, dec_batch_output = dec_batch[:, :-1], dec_batch[:, 1:]
+        dec_mask = dec_mask[:, :-1]
 
         self.optimizer.zero_grad()
-        logit, *_ = self.model(enc_batch, dec_batch_input)
+        logit, *_ = self.model(
+            enc_batch,
+            dec_batch_input,
+            encoder_attention_mask=enc_mask,
+            decoder_attention_mask=dec_mask)
 
         # loss: NNL if ptr else Cross entropy
         loss = self.criterion(
