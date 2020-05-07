@@ -64,9 +64,9 @@ class Bart(nn.Module):
         self.optimizer.zero_grad()
         logit, *_ = self.model(
             enc_batch,
-            #attention_mask=enc_mask,
+            attention_mask=enc_mask,
             decoder_input_ids=dec_batch_input,
-            #decoder_attention_mask=dec_mask,
+            decoder_attention_mask=dec_mask,
             )
 
         # loss: NNL if ptr else Cross entropy

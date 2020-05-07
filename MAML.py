@@ -194,6 +194,7 @@ for meta_iteration in range(config.epochs):
     # clip gradient
     nn.utils.clip_grad_norm_(meta_net.parameters(), config.max_grad_norm)
     meta_optimizer.step()
+    batch_loss.detach()
 
     # Meta-Evaluation
     if meta_iteration % 10 == 0 and meta_iteration:
