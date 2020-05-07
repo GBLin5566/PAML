@@ -77,23 +77,24 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations, test=False):
     if test:
         return val_p_list
     else:
-        for d in val_iter:
-            _, t_ppl, t_loss = model.train_one_batch(d, train=False)
-            val_loss += t_loss
-            val_p.append(t_ppl)
+        with torch.no_grad():
+            for d in val_iter:
+                _, t_ppl, t_loss = model.train_one_batch(d, train=False)
+                val_loss += t_loss
+                val_p.append(t_ppl)
         return val_loss, np.mean(val_p)
 
 
 def do_evaluation(model, test_iter):
-    p, l = [], []
-    for batch in test_iter:
-        loss, ppl, _ = model.train_one_batch(batch, train=False)
-        l.append(loss)
-        p.append(ppl)
+    with torch.no_grad():
+        p, l = [], []
+        for batch in test_iter:
+            loss, ppl, _ = model.train_one_batch(batch, train=False)
+            l.append(loss)
+            p.append(ppl)
     return np.mean(l), np.mean(p)
 
 # =================================main=================================
-
 
 p = Personas()
 path_split = config.save_path.split(os.sep)
