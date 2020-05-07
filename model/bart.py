@@ -3,7 +3,7 @@ import math
 
 import torch
 import torch.nn as nn
-from transformers import BartModel
+from transformers import BartForConditionalGeneration
 from model.common_layer import (
     get_input_from_batch,
     get_output_from_batch,
@@ -19,7 +19,7 @@ class Bart(nn.Module):
             ):
         super().__init__()
 
-        self.model = BartModel.from_pretrained('bart-large')
+        self.model = BartForConditionalGeneration.from_pretrained('bart-large')
 
         if is_eval:
             self.model = self.model.eval()
@@ -64,9 +64,10 @@ class Bart(nn.Module):
         self.optimizer.zero_grad()
         logit, *_ = self.model(
             enc_batch,
-            attention_mask=enc_mask,
+            #attention_mask=enc_mask,
             decoder_input_ids=dec_batch_input,
-            decoder_attention_mask=dec_mask)
+            #decoder_attention_mask=dec_mask,
+            )
 
         # loss: NNL if ptr else Cross entropy
         loss = self.criterion(

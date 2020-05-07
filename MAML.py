@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
 
 from model.common_layer import NoamOpt
-from model import Bert2Bert
+from model import Bert2Bert, Bart
 from utils import config
 from utils.data_reader import Personas
 from warmup_scheduler import GradualWarmupScheduler
@@ -103,7 +103,11 @@ path_split[-1] += f"_lr_{config.lr}_meta_lr_{config.meta_lr}"
 save_path = f'{os.sep}'.join(path_split)
 writer = SummaryWriter(log_dir=save_path)
 # Build model, optimizer, and set states
-meta_net = Bert2Bert()
+build_model_func_map = {
+    'bert2bert': Bert2Bert,
+    'bart': Bart,
+}
+meta_net = build_model_func_map[config.model_type]()
 if config.meta_optimizer == 'sgd':
     meta_optimizer = torch.optim.SGD(meta_net.parameters(), lr=config.meta_lr)
 elif config.meta_optimizer == 'adam':
