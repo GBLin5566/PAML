@@ -184,6 +184,8 @@ for meta_iteration in range(config.epochs):
     writer.add_scalars('loss_meta',
                        {'train_loss_meta': np.mean(train_loss_meta)},
                        meta_iteration)
+    print(f"train_loss_before: {np.mean(train_loss_before)} +- {np.std(train_loss_before)}")
+    print(f"train_loss_meta: {np.mean(train_loss_meta)} +- {np.std(train_loss_meta)}")
 
     # meta Update
     if(config.meta_optimizer == 'noam'):
@@ -232,6 +234,8 @@ for meta_iteration in range(config.epochs):
         writer.add_scalars(
             'loss_meta', {
                 'val_loss_meta': np.mean(val_loss_meta)}, meta_iteration)
+        print(f"val_loss_before: {np.mean(val_loss_before)} +- {np.std(val_loss_before)}")
+        print(f"val_loss_meta: {np.mean(val_loss_meta)} +- {np.std(val_loss_meta)}")
         # check early stop
         if np.mean(val_loss_meta) < best_loss:
             best_loss = np.mean(val_loss_meta)
