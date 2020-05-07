@@ -71,8 +71,9 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations, test=False):
         for d in train_iter:
             t_loss, t_ppl, _ = model.train_one_batch(d)
         if test:
-            _, test_ppl = do_evaluation(model, val_iter)
-            val_p_list.append(test_ppl)
+            with torch.no_grad():
+                _, test_ppl = do_evaluation(model, val_iter)
+                val_p_list.append(test_ppl)
 
     if test:
         return val_p_list
