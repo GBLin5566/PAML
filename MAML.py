@@ -118,14 +118,16 @@ elif config.meta_optimizer == 'noam':
         lr=0, betas=(0.9, 0.98), eps=1e-9))
 else:
     raise ValueError
-warmup_ratio = 0.1
-scheduler_steplr = StepLR(meta_optimizer, step_size=10, gamma=0.1)
-scheduler_warmup = GradualWarmupScheduler(
-    meta_optimizer,
-    multiplier=1,
-    total_epoch=config.epochs * warmup_ratio,
-    after_scheduler=scheduler_steplr,
-)
+
+if config.warmup:
+    warmup_ratio = 0.1
+    scheduler_steplr = StepLR(meta_optimizer, step_size=10, gamma=0.1)
+    scheduler_warmup = GradualWarmupScheduler(
+        meta_optimizer,
+        multiplier=1,
+        total_epoch=config.epochs * warmup_ratio,
+        after_scheduler=scheduler_steplr,
+    )
 
 meta_batch_size = config.meta_batch_size
 tasks = p.get_personas('train')
@@ -142,7 +144,8 @@ stop_count = 0
 for meta_iteration in range(config.epochs):
     # save original weights to make the update
     # NOTE theta = weights_original
-    scheduler_warmup.step(meta_iteration)
+    if config.warmup:
+        scheduler_warmup.step(meta_iteration)
     weights_original = deepcopy(meta_net.state_dict())
     train_loss_before = []
     train_loss_meta = []

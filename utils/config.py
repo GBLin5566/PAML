@@ -15,6 +15,7 @@ parser.add_argument("--beam_size", type=int, default=5)
 parser.add_argument("--save_path", type=str, default="save/")
 parser.add_argument("--save_path_dataset", type=str, default="save/")
 parser.add_argument("--cuda", action="store_true")
+parser.add_argument("--warmup", action="store_true")
 parser.add_argument("--pointer_gen", action="store_true")
 parser.add_argument("--is_coverage", action="store_true")
 parser.add_argument("--use_oov_emb", action="store_true")
@@ -70,6 +71,7 @@ trunc_norm_init_std = 1e-4
 max_grad_norm = arg.max_grad_norm
 
 USE_CUDA = arg.cuda
+warmup = arg.warmup
 pointer_gen = arg.pointer_gen
 is_coverage = arg.is_coverage
 use_oov_emb = arg.use_oov_emb
