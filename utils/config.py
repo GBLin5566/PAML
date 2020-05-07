@@ -87,10 +87,11 @@ model_type_to_builder = {
     'bart': partial(BartTokenizer.from_pretrained, 'bart-large'),
 }
 _tokenizer = model_type_to_builder[model_type]()
+# or 0 to avoid using None when idx is not used.
 UNK_idx = _tokenizer.unk_token_id
-PAD_idx = _tokenizer.pad_token_id
-EOS_idx = _tokenizer.sep_token_id
-SOS_idx = _tokenizer.cls_token_id
+PAD_idx = _tokenizer.pad_token_id or 0
+EOS_idx = _tokenizer.sep_token_id or 0
+SOS_idx = _tokenizer.cls_token_id or 0
 
 
 emb_file = "vectors/glove.6B.{}d.txt".format(str(emb_dim))
