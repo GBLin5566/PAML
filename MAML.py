@@ -99,7 +99,8 @@ p = Personas()
 path_split = config.save_path.split(os.sep)
 if not path_split[-1]:
     path_split.pop(-1)
-path_split[-1] += f"_model_{config.model_type}_lr_{config.lr}_meta_lr_{config.meta_lr}"
+path_split[-1] += \
+    f"_model_{config.model_type}_lr_{config.lr}_meta_lr_{config.meta_lr}_warmup_{config.warmup}"
 save_path = f'{os.sep}'.join(path_split)
 writer = SummaryWriter(log_dir=save_path)
 # Build model, optimizer, and set states
