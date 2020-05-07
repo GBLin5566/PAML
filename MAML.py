@@ -78,11 +78,10 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations, test=False):
     if test:
         return val_p_list
     else:
-        with torch.no_grad():
-            for d in val_iter:
-                _, t_ppl, t_loss = model.train_one_batch(d, train=False)
-                val_loss += t_loss
-                val_p.append(t_ppl)
+        for d in val_iter:
+            _, t_ppl, t_loss = model.train_one_batch(d, train=False)
+            val_loss += t_loss
+            val_p.append(t_ppl)
         return val_loss, np.mean(val_p)
 
 
