@@ -237,6 +237,8 @@ for meta_iteration in range(config.epochs):
                 'val_loss_meta': np.mean(val_loss_meta)}, meta_iteration)
         print(f"val_loss_before: {np.mean(val_loss_before)} +- {np.std(val_loss_before)}")
         print(f"val_loss_meta: {np.mean(val_loss_meta)} +- {np.std(val_loss_meta)}")
+        print(f"Current best_loss: {best_loss}")
+        print()
         # check early stop
         if np.mean(val_loss_meta) < best_loss:
             best_loss = np.mean(val_loss_meta)
