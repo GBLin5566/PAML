@@ -52,7 +52,7 @@ arg = parser.parse_args()
 print(arg)
 model = arg.model
 persona = arg.persona
-model_type = 'gpt2gpt'  # bert2bert, bart, gpt2gpt
+model_type = 'bert2bert'  # bert2bert, bart
 
 
 # Hyperparameters

@@ -3,7 +3,8 @@ import math
 
 import torch
 import torch.nn as nn
-from model import HuggingfaceEncoderDecoder
+from transformers import EncoderDecoderModel
+
 from model.common_layer import (
     get_input_from_batch,
     get_output_from_batch,
@@ -19,7 +20,7 @@ class Bert2Bert(nn.Module):
             ):
         super().__init__()
 
-        self.model = HuggingfaceEncoderDecoder.from_pretrained(
+        self.model = EncoderDecoderModel.from_encoder_decoder_pretrained(
             'bert-base-uncased',
             'bert-base-uncased',
         )
@@ -27,7 +28,6 @@ class Bert2Bert(nn.Module):
         if is_eval:
             self.model = self.model.eval()
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=config.PAD_idx)
         self.optimizer = torch.optim.Adam(self.parameters(), lr=config.lr)
 
         if config.use_sgd:
@@ -64,27 +64,16 @@ class Bert2Bert(nn.Module):
         dec_mask = dec_mask[:, :-1]
 
         self.optimizer.zero_grad()
-        logit, *_ = self.model(
-            enc_batch,
-            dec_batch_input,
-            encoder_attention_mask=enc_mask,
-            decoder_attention_mask=dec_mask)
-
-        # loss: NNL if ptr else Cross entropy
-        loss = self.criterion(
-            logit.contiguous().view(-1, logit.size(-1)),
-            dec_batch_output.contiguous().view(-1))
-
-        if(config.act):
-            loss += self.compute_act_loss(self.encoder)
-            loss += self.compute_act_loss(self.decoder)
+        loss = self.model(
+            input_ids=enc_batch,
+            decoder_input_ids=dec_batch_input,
+            lm_labels=dec_batch_output,
+            attention_mask=enc_mask,
+            decoder_attention_mask=dec_mask,
+        )[0]
 
         if(train):
             loss.backward()
             self.optimizer.step()
-        if(config.label_smoothing):
-            loss = self.criterion_ppl(
-                logit.contiguous().view(-1, logit.size(-1)),
-                dec_batch.contiguous().view(-1))
 
         return loss.item(), math.exp(loss.item()), loss
