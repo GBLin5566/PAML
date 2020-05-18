@@ -7,13 +7,10 @@ import numpy as np
 from tensorboardX import SummaryWriter
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import StepLR
 
-from model.common_layer import NoamOpt
 from model import Bert2Bert, Bart
 from utils import config
 from utils.data_reader import Personas
-from warmup_scheduler import GradualWarmupScheduler
 
 
 def make_infinite(dataloader):
@@ -94,7 +91,6 @@ def do_evaluation(model, test_iter):
             p.append(ppl)
     return np.mean(l), np.mean(p)
 
-# =================================main=================================
 
 p = Personas()
 path_split = config.save_path.split(os.sep)
@@ -115,40 +111,23 @@ if config.meta_optimizer == 'sgd':
     meta_optimizer = torch.optim.SGD(meta_net.parameters(), lr=config.meta_lr)
 elif config.meta_optimizer == 'adam':
     meta_optimizer = torch.optim.Adam(meta_net.parameters(), lr=config.meta_lr)
-elif config.meta_optimizer == 'noam':
-    meta_optimizer = NoamOpt(
-        config.hidden_dim, 1, 4000, torch.optim.Adam(meta_net.parameters(),
-        lr=0, betas=(0.9, 0.98), eps=1e-9))
 else:
     raise ValueError
-
-if config.warmup:
-    warmup_ratio = 0.1
-    scheduler_steplr = StepLR(meta_optimizer, step_size=10, gamma=0.1)
-    scheduler_warmup = GradualWarmupScheduler(
-        meta_optimizer,
-        multiplier=1,
-        total_epoch=config.epochs * warmup_ratio,
-        after_scheduler=scheduler_steplr,
-    )
 
 meta_batch_size = config.meta_batch_size
 tasks = p.get_personas('train')
 tasks_iter = make_infinite_list(tasks)
 
-
 # meta early stop
 patience = 50
 if config.fix_dialnum_train:
     patience = 100
-best_loss = 10000000
+best_before_loss = best_meta_loss = 10000000
 stop_count = 0
 # Main loop
 for meta_iteration in range(config.epochs):
     # save original weights to make the update
     # NOTE theta = weights_original
-    if config.warmup:
-        scheduler_warmup.step(meta_iteration)
     weights_original = deepcopy(meta_net.state_dict())
     train_loss_before = []
     train_loss_meta = []
@@ -168,9 +147,12 @@ for meta_iteration in range(config.epochs):
         v_loss, v_ppl = do_evaluation(meta_net, val_iter)
         train_loss_before.append(math.exp(v_loss))
         # Update fast nets
-        val_loss, v_ppl = do_learning_fix_step(
+        val_loss, val_ppl = do_learning_fix_step(
             meta_net, train_iter, val_iter, iterations=config.meta_iteration)
-        print(f"meta_iteration {meta_iteration} meta_batch_index {meta_batch_index}: loss {val_loss} ppl {v_ppl}")
+        print(
+            f"meta_iteration {meta_iteration} meta_batch_index {meta_batch_index}:"
+            f" loss {val_loss} ppl {val_ppl}"
+        )
         train_loss_meta.append(math.exp(val_loss.item()))
         batch_loss += val_loss
         # log
@@ -237,14 +219,17 @@ for meta_iteration in range(config.epochs):
                 'val_loss_meta': np.mean(val_loss_meta)}, meta_iteration)
         print(f"val_loss_before: {np.mean(val_loss_before)} +- {np.std(val_loss_before)}")
         print(f"val_loss_meta: {np.mean(val_loss_meta)} +- {np.std(val_loss_meta)}")
-        print(f"Current best_loss: {best_loss}")
-        print()
         # check early stop
-        if np.mean(val_loss_meta) < best_loss:
-            best_loss = np.mean(val_loss_meta)
+        if np.mean(val_loss_before) < best_before_loss:
+            best_before_loss = np.mean(val_loss_before)
+        if np.mean(val_loss_meta) < best_meta_loss:
+            best_meta_loss = np.mean(val_loss_meta)
             stop_count = 0
-            meta_net.save_model(best_loss, 1, 0.0, 0.0, 0.0, 1.1)
+            meta_net.save_model(best_meta_loss, 1, 0.0, 0.0, 0.0, 1.1)
         else:
             stop_count += 1
             if stop_count > patience:
                 break
+        print(f"Current best_before_loss: {best_before_loss}")
+        print(f"Current best_meta_loss: {best_meta_loss}")
+        print()
