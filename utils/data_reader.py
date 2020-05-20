@@ -439,6 +439,12 @@ class Personas:
         self, persona, split): return len(
         self.type[split][persona])
 
+    def get_loader(self, *args, balanced=True, **kwargs):
+        if balanced:
+            return self.get_balanced_loader(*args, **kwargs)
+        else:
+            return self.get_data_loader(*args, **kwargs)
+
     def get_balanced_loader(
             self,
             persona,

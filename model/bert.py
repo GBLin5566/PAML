@@ -54,9 +54,7 @@ class Bert2Bert(nn.Module):
         self.best_path = model_save_path
         torch.save(state, model_save_path)
 
-    def train_one_batch(self, batch, train=True):
-        if train:
-            self.model.train()
+    def forward(self, batch):
         enc_batch, enc_mask, _, enc_batch_extend_vocab, extra_zeros, _, _ = \
             get_input_from_batch(batch)
         dec_batch, dec_mask, _, _, _ = get_output_from_batch(batch)
@@ -72,8 +70,10 @@ class Bert2Bert(nn.Module):
             decoder_attention_mask=dec_mask,
         )[0]
 
-        if(train):
-            loss.backward()
-            self.optimizer.step()
+        return loss.item(), math.exp(min(loss.item(), 600)), loss
 
-        return loss.item(), math.exp(loss.item()), loss
+    def train(self, batch):
+        loss_value, ppl, loss = self.forward(batch)
+        loss.backward()
+        self.optimizer.step()
+        return loss_value, ppl

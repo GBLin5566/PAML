@@ -13,12 +13,6 @@ from utils import config
 from utils.data_reader import Personas
 
 
-def make_infinite(dataloader):
-    while True:
-        for x in dataloader:
-            yield x
-
-
 def make_infinite_list(personas):
     while True:
         print("New epoch")
@@ -27,72 +21,33 @@ def make_infinite_list(personas):
             yield x
 
 
-def do_learning_early_stop(model, train_iter, val_iter, iterations, strict=1):
-    # b_loss, b_ppl = do_evaluation(model, val_iter)
-    b_loss, b_ppl = 100000, 100000
-    best = deepcopy(model.state_dict())
-    cnt = 0
-    idx = 0
-    for _ in range(iterations):
-        train_l, train_p = [], []
-        for d in train_iter:
-            t_loss, t_ppl, _ = model.train_one_batch(d)
-            train_l.append(t_loss)
-            train_p.append(t_ppl)
-
-        n_loss, n_ppl = do_evaluation(model, val_iter)
-        # early stopping
-        if(n_ppl <= b_ppl):
-            b_ppl = n_ppl
-            b_loss = n_loss
-            cnt = 0
-            idx += 1
-            best = deepcopy(model.state_dict())  # save best weights
-        else:
-            cnt += 1
-        if(cnt > strict):
-            break
-
-    # load the best model
-    model.load_state_dict({name: best[name] for name in best})
-
-    return (np.mean(train_l), np.mean(train_p), b_loss, b_ppl), idx
-
-
-def do_learning_fix_step(model, train_iter, val_iter, iterations, test=False):
-    val_p = []
-    val_p_list = []
+def do_learning_fix_step(model, train_iter, val_iter, iterations):
+    model.train()
+    val_ppl = []
     val_loss = 0
-    for _, _ in enumerate(range(iterations)):
-
-        for d in train_iter:
-            t_loss, t_ppl, _ = model.train_one_batch(d)
-        if test:
-            with torch.no_grad():
-                _, test_ppl = do_evaluation(model, val_iter)
-                val_p_list.append(test_ppl)
-
-    if test:
-        return val_p_list
-    else:
-        for d in val_iter:
-            _, t_ppl, t_loss = model.train_one_batch(d, train=False)
-            val_loss += t_loss
-            val_p.append(t_ppl)
-        return val_loss, np.mean(val_p)
+    for _ in range(iterations):
+        for data in train_iter:
+            model.train(data)
+    for data in val_iter:
+        _, ppl, loss_tensor = model(data)
+        val_loss += loss_tensor
+        val_ppl.append(ppl)
+    return val_loss / len(val_ppl), np.mean(val_ppl)
 
 
 def do_evaluation(model, test_iter):
+    model.eval()
     with torch.no_grad():
-        p, l = [], []
+        ppl_list, loss_list = [], []
         for batch in test_iter:
-            loss, ppl, _ = model.train_one_batch(batch, train=False)
-            l.append(loss)
-            p.append(ppl)
-    return np.mean(l), np.mean(p)
+            loss, ppl, _ = model(batch)
+            loss_list.append(loss)
+            ppl_list.append(ppl)
+    return np.mean(loss_list), np.mean(ppl_list)
 
 
 p = Personas()
+# Make save_path
 path_split = config.save_path.split(os.sep)
 if not path_split[-1]:
     path_split.pop(-1)
@@ -107,12 +62,12 @@ build_model_func_map = {
     'bart': Bart,
 }
 meta_net = build_model_func_map[config.model_type]()
-if config.meta_optimizer == 'sgd':
-    meta_optimizer = torch.optim.SGD(meta_net.parameters(), lr=config.meta_lr)
-elif config.meta_optimizer == 'adam':
-    meta_optimizer = torch.optim.Adam(meta_net.parameters(), lr=config.meta_lr)
-else:
-    raise ValueError
+optimizer_map = {
+    'sgd': torch.optim.SGD,
+    'adam': torch.optim.Adam,
+}
+meta_optimizer = optimizer_map[config.meta_optimizer](
+    meta_net.parameters(), lr=config.meta_lr)
 
 meta_batch_size = config.meta_batch_size
 tasks = p.get_personas('train')
@@ -135,28 +90,30 @@ for meta_iteration in range(config.epochs):
     batch_loss = 0
     for meta_batch_index in range(meta_batch_size):
         # Get task
-        if config.fix_dialnum_train:
-            train_iter, val_iter = p.get_balanced_loader(
-                persona=tasks_iter.__next__(),
-                batch_size=config.batch_size, split='train')
-        else:
-            train_iter, val_iter = p.get_data_loader(
-                persona=tasks_iter.__next__(),
-                batch_size=config.batch_size, split='train')
-        # before first update
-        v_loss, v_ppl = do_evaluation(meta_net, val_iter)
-        train_loss_before.append(math.exp(v_loss))
-        # Update fast nets
-        val_loss, val_ppl = do_learning_fix_step(
-            meta_net, train_iter, val_iter, iterations=config.meta_iteration)
-        print(
-            f"meta_iteration {meta_iteration} meta_batch_index {meta_batch_index}:"
-            f" loss {val_loss} ppl {val_ppl}"
+        train_iter, val_iter = p.get_loader(
+            persona=tasks_iter.__next__(),
+            batch_size=config.batch_size,
+            split='train',
+            balanced=config.fix_dialnum_train,
         )
-        train_loss_meta.append(math.exp(val_loss.item()))
-        batch_loss += val_loss
-        # log
-
+        # before first update
+        val_loss_before, val_ppl_before = do_evaluation(meta_net, val_iter)
+        train_loss_before.append(val_ppl_before)
+        # Update fast nets
+        val_loss_update, val_ppl_update = do_learning_fix_step(
+            meta_net, train_iter, val_iter, iterations=config.meta_iteration)
+        val_loss_update_from_eval, val_ppl_update_from_eval = \
+            do_evaluation(meta_net, val_iter)
+        print(
+            f"meta_iteration {meta_iteration} "
+            f"meta_batch_index {meta_batch_index}: "
+            f"val_loss_before {val_loss_before} val_ppl_before {val_ppl_before}"
+            f"val_loss_update {val_loss_update} val_ppl_update {val_ppl_update}"
+            f"val_loss_update_from_eval {val_loss_update_from_eval}"
+            f"val_ppl_update_from_eval {val_ppl_update_from_eval}"
+        )
+        train_loss_meta.append(val_ppl_update)
+        batch_loss += val_loss_update
         # reset
         meta_net.load_state_dict(
             {name: weights_original[name] for name in weights_original})
@@ -167,20 +124,20 @@ for meta_iteration in range(config.epochs):
     writer.add_scalars('loss_meta',
                        {'train_loss_meta': np.mean(train_loss_meta)},
                        meta_iteration)
-    print(f"train_loss_before: {np.mean(train_loss_before)} +- {np.std(train_loss_before)}")
-    print(f"train_loss_meta: {np.mean(train_loss_meta)} +- {np.std(train_loss_meta)}")
+    print(
+        f"train_loss_before: {np.mean(train_loss_before)} "
+        f"+- {np.std(train_loss_before)}")
+    print(
+        f"train_loss_meta: {np.mean(train_loss_meta)} "
+        f"+- {np.std(train_loss_meta)}")
 
     # meta Update
-    if(config.meta_optimizer == 'noam'):
-        meta_optimizer.optimizer.zero_grad()
-    else:
-        meta_optimizer.zero_grad()
+    meta_optimizer.zero_grad()
     batch_loss /= meta_batch_size
     batch_loss.backward()
     # clip gradient
     nn.utils.clip_grad_norm_(meta_net.parameters(), config.max_grad_norm)
     meta_optimizer.step()
-    batch_loss.detach()
 
     # Meta-Evaluation
     if meta_iteration % 10 == 0 and meta_iteration:
@@ -189,14 +146,13 @@ for meta_iteration in range(config.epochs):
         val_loss_meta = []
         weights_original = deepcopy(meta_net.state_dict())
         for per in p.get_personas('valid'):
-            if config.fix_dialnum_train:
-                train_iter, val_iter = p.get_balanced_loader(
-                    persona=per,
-                    batch_size=config.batch_size, split='valid', fold=0)
-            else:
-                train_iter, val_iter = p.get_data_loader(
-                    persona=per,
-                    batch_size=config.batch_size, split='valid', fold=0)
+            train_iter, val_iter = p.get_loader(
+                persona=per,
+                batch_size=config.batch_size,
+                split='valid',
+                fold=0,
+                balanced=config.fix_dialnum_train,
+            )
             # zero shot result
             loss, ppl = do_evaluation(meta_net, val_iter)
             val_loss_before.append(math.exp(loss))
