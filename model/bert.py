@@ -72,7 +72,7 @@ class Bert2Bert(nn.Module):
 
         return loss.item(), math.exp(min(loss.item(), 600)), loss
 
-    def train(self, batch):
+    def train_one_batch(self, batch):
         loss_value, ppl, loss = self.forward(batch)
         loss.backward()
         self.optimizer.step()

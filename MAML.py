@@ -26,7 +26,7 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations):
     val_loss = 0
     for _ in range(iterations):
         for data in train_iter:
-            model.train(data)
+            model.train_one_batch(data)
     for data in val_iter:
         _, ppl, loss_tensor = model(data)
         val_loss += loss_tensor
