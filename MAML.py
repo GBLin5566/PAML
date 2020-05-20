@@ -101,15 +101,13 @@ for meta_iteration in range(config.epochs):
         # Update fast nets
         val_loss_update, val_ppl_update = do_learning_fix_step(
             meta_net, train_iter, val_iter, iterations=config.meta_iteration)
-        val_loss_update_from_eval, val_ppl_update_from_eval = \
-            do_evaluation(meta_net, val_iter)
         print(
             f"meta_iteration {meta_iteration} "
-            f"meta_batch_index {meta_batch_index}: "
-            f"val_loss_before {val_loss_before} val_ppl_before {val_ppl_before}"
-            f"val_loss_update {val_loss_update} val_ppl_update {val_ppl_update}"
-            f"val_loss_update_from_eval {val_loss_update_from_eval}"
-            f"val_ppl_update_from_eval {val_ppl_update_from_eval}"
+            f"meta_batch_index {meta_batch_index}:\n"
+            f"    val_loss_before {val_loss_before}\n"
+            f"    val_ppl_before {val_ppl_before}\n"
+            f"    val_loss_update {val_loss_update}\n"
+            f"    val_ppl_update {val_ppl_update}\n"
         )
         train_loss_meta.append(val_ppl_update)
         batch_loss += val_loss_update
