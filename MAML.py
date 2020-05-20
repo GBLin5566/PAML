@@ -1,5 +1,4 @@
 import os
-import math
 from copy import deepcopy
 from random import shuffle
 
@@ -155,13 +154,13 @@ for meta_iteration in range(config.epochs):
             )
             # zero shot result
             loss, ppl = do_evaluation(meta_net, val_iter)
-            val_loss_before.append(math.exp(loss))
+            val_loss_before.append(ppl)
             # mata tuning
             val_loss, val_ppl = do_learning_fix_step(
                 meta_net, train_iter, val_iter,
                 iterations=config.meta_iteration)
             print(f"persona {per}: loss {val_loss} ppl {val_ppl}")
-            val_loss_meta.append(math.exp(val_loss.item()))
+            val_loss_meta.append(val_ppl)
             # updated result
 
             meta_net.load_state_dict(
