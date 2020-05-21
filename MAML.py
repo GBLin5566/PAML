@@ -66,7 +66,7 @@ suffix = {
     "meta_lr": config.meta_lr,
     "iter_as_step": config.iter_as_step,
 }
-for key, value in suffix:
+for key, value in suffix.items():
     path_split[-1] += f"_{key}_{value}"
 save_path = f'{os.sep}'.join(path_split)
 writer = SummaryWriter(log_dir=save_path)
