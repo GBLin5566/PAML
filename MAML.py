@@ -24,13 +24,23 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations):
     model.train()
     val_ppl = []
     val_loss = 0
-    for _ in range(iterations):
-        for data in train_iter:
+    if config.iter_as_step:
+        for _ in range(iterations):
+            data = next(train_iter)
             model.train_one_batch(data)
-    for data in val_iter:
-        _, ppl, loss_tensor = model(data)
-        val_loss += loss_tensor
-        val_ppl.append(ppl)
+        for _ in range(iterations):
+            data = next(val_iter)
+            _, ppl, loss_tensor = model(data)
+            val_loss += loss_tensor
+            val_ppl.append(ppl)
+    else:
+        for _ in range(iterations):
+            for data in train_iter:
+                model.train_one_batch(data)
+        for data in val_iter:
+            _, ppl, loss_tensor = model(data)
+            val_loss += loss_tensor
+            val_ppl.append(ppl)
     return val_loss / len(val_ppl), np.mean(val_ppl)
 
 
@@ -50,8 +60,14 @@ p = Personas()
 path_split = config.save_path.split(os.sep)
 if not path_split[-1]:
     path_split.pop(-1)
-path_split[-1] += \
-    f"_model_{config.model_type}_lr_{config.lr}_meta_lr_{config.meta_lr}_warmup_{config.warmup}"
+suffix = {
+    "model": config.model_type,
+    "lr": config.lr,
+    "meta_lr": config.meta_lr,
+    "iter_as_step": config.iter_as_step,
+}
+for key, value in suffix:
+    path_split[-1] += f"_{key}_{value}"
 save_path = f'{os.sep}'.join(path_split)
 writer = SummaryWriter(log_dir=save_path)
 # Build model, optimizer, and set states

@@ -30,13 +30,7 @@ parser.add_argument("--noam", action="store_true")
 parser.add_argument("--universal", action="store_true")
 parser.add_argument("--act", action="store_true")
 parser.add_argument("--act_loss_weight", type=float, default=0.001)
-
-
-# transformer
-parser.add_argument("--hop", type=int, default=6)
-parser.add_argument("--heads", type=int, default=4)
-parser.add_argument("--depth", type=int, default=40)
-parser.add_argument("--filter", type=int, default=50)
+parser.add_argument("--iter_as_step", action="store_true")
 
 # meta
 parser.add_argument("--fix_dialnum_train", action="store_true")
@@ -118,7 +112,7 @@ noam = arg.noam
 universal = arg.universal
 act = arg.act
 act_loss_weight = arg.act_loss_weight
-
+iter_as_step = arg.iter_as_step
 
 # Meta-learn
 meta_lr = arg.meta_lr
