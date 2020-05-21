@@ -492,7 +492,7 @@ class Personas:
         dataset_valid = Dataset(val, self.vocab)
         data_loader_val = torch.utils.data.DataLoader(dataset=dataset_valid,
                                                       batch_size=batch_size,
-                                                      shuffle=False,
+                                                      shuffle=config.shuffle_val,
                                                       collate_fn=collate_fn)
 
         return data_loader_tr, data_loader_val
@@ -532,7 +532,7 @@ class Personas:
         dataset_valid = Dataset(val, self.vocab)
         data_loader_val = torch.utils.data.DataLoader(dataset=dataset_valid,
                                                       batch_size=batch_size,
-                                                      shuffle=False,
+                                                      shuffle=config.shuffle_val,
                                                       collate_fn=collate_fn)
 
         return data_loader_tr, data_loader_val

@@ -24,23 +24,20 @@ def do_learning_fix_step(model, train_iter, val_iter, iterations):
     model.train()
     val_ppl = []
     val_loss = 0
-    if config.iter_as_step:
-        for _ in range(iterations):
-            data = next(train_iter)
+    for _ in range(iterations):
+        for data in train_iter:
             model.train_one_batch(data)
-        for _ in range(iterations):
-            data = next(val_iter)
-            _, ppl, loss_tensor = model(data)
-            val_loss += loss_tensor
-            val_ppl.append(ppl)
-    else:
-        for _ in range(iterations):
-            for data in train_iter:
-                model.train_one_batch(data)
+            if config.iter_as_step:
+                break
+    for _ in range(iterations):
         for data in val_iter:
             _, ppl, loss_tensor = model(data)
             val_loss += loss_tensor
             val_ppl.append(ppl)
+            if config.iter_as_step:
+                break
+        if not config.iter_as_step:
+            break
     return val_loss / len(val_ppl), np.mean(val_ppl)
 
 
@@ -106,7 +103,7 @@ for meta_iteration in range(config.epochs):
     for meta_batch_index in range(meta_batch_size):
         # Get task
         train_iter, val_iter = p.get_loader(
-            persona=tasks_iter.__next__(),
+            persona=next(tasks_iter),
             batch_size=config.batch_size,
             split='train',
             balanced=config.fix_dialnum_train,

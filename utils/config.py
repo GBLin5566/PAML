@@ -31,6 +31,7 @@ parser.add_argument("--universal", action="store_true")
 parser.add_argument("--act", action="store_true")
 parser.add_argument("--act_loss_weight", type=float, default=0.001)
 parser.add_argument("--iter_as_step", action="store_true")
+parser.add_argument("--shuffle_val", action="store_true")
 
 # meta
 parser.add_argument("--fix_dialnum_train", action="store_true")
@@ -106,6 +107,7 @@ universal = arg.universal
 act = arg.act
 act_loss_weight = arg.act_loss_weight
 iter_as_step = arg.iter_as_step
+shuffle_val = arg.shuffle_val
 
 # Meta-learn
 meta_lr = arg.meta_lr
