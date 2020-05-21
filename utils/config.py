@@ -99,13 +99,6 @@ if(not test):
     save_path_dataset = save_path
 
 
-# transformer
-hop = arg.hop
-heads = arg.heads
-depth = arg.depth
-filter = arg.filter
-
-
 label_smoothing = arg.label_smoothing
 weight_sharing = arg.weight_sharing
 noam = arg.noam
